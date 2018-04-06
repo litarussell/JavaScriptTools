@@ -34,7 +34,8 @@
         }
     }
     
-    var _isString = _isType('String')
+    var _isString = _isType('String'),
+        _isArray = _isType('Array')
 
     var _isReference = function(obj) {
         var type = getType(obj)
@@ -46,6 +47,9 @@
         var type = getType(obj)
         return _typeMap[type]()
     }
+
+    var tools = function() {}
+
     // 首字母大写,其他字母小写
     var toUp = function(str){
         if (_isString(str)) {
@@ -60,17 +64,21 @@
         return _typeMap[_toString.call(obj)];
     }
     // 用于抹平数组
-    var flattenDepth = function(array, depth=1) {
+    var flattenDepth = function(arr, depth=1) {
         let re = []
-        array.forEach(item=>{
-            let d = depth
-            if (Array.isArray(item) && d > 0) {
-                re.push(...(flattenDepth(item, --d)))
-            } else {
-                re.push(item)
-            }
-        })
-        return re
+        if (isArray(arr)) {
+            arr.forEach(item=>{
+                let d = depth
+                if (Array.isArray(item) && d > 0) {
+                    re.push(...(flattenDepth(item, --d)))
+                } else {
+                    re.push(item)
+                }
+            })
+            return re
+        }
+            
+        return new Error("flattenDepth()类型错误")
     }
     // 深拷贝
     // 拷贝策略
@@ -98,18 +106,30 @@
         
         return copy
     }
-
-    var tools = function() {}
+    // 数组去重
+    var unique = function(arr){
+        var re = []
+        if (isArray(arr)) {
+            arr.forEach(function(item){
+                if (re.indexOf(item) === -1)
+                    re.push(item)
+            })
+            return re;
+        }
+        return new Error("unique()类型错误")
+    }
+    
 
     var fn = tools.prototype = {
         isString: _isString,
-        isArray: _isType('Array'),
-        isNumber: _isType('Number')
+        isArray: _isArray,
     }
+
     fn.flattenDepth = flattenDepth
     fn.getType = getType
     fn.toUp = toUp
     fn.deepClone = deepClone
+    fn.unique = unique
 
     return new tools;
 })
