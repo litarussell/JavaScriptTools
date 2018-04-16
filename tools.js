@@ -16,18 +16,15 @@
 })(function(root) {
     // 该对象主要用于获取变量类型、声明深拷贝时支持的引用类型、返回特定引用类型的实例
     var typeMap = {
-        'reference': ['object', 'array', 'function', 'date', 'regExp'],
-        // 'object': function() { return new Object() },
-        // 'array': function() { return new Array() },
         '[object Boolean]': 'boolean',
         '[object Number]': 'number',
         '[object String]': 'string',
+        '[object Undefined]': 'undefined',
+        '[object Null]': 'null',
         '[object Function]': 'function',
         '[object Array]': 'array',
         '[object Date]': 'date',
         '[object RegExp]': 'regExp',
-        '[object Undefined]': 'undefined',
-        '[object Null]': 'null',
         '[object Object]': 'object'
     }
 
@@ -38,20 +35,6 @@
             return toString.call(obj) === '[object ' + type + ']';
         }
     }
-
-    // 判断变量是否为引用类型
-    var isReference = function(obj) {
-        var type = getType(obj);
-        if (typeMap['reference'].indexOf(type) === -1)
-            return false;
-        return true;
-    }
-    // var returnType = function(obj) {
-    //     if (isReference(obj)) {
-    //         return typeMap[getType(obj)]();
-    //     }
-    //     return new Error("returnType()不支持该变量类型");
-    // }
 
     var tools = function() {
         // if (!(this instanceof tools)) {
@@ -85,29 +68,12 @@
     var getType = tools.getType = function(obj) {
         return typeMap[toString.call(obj)];
     }
-    // 拷贝策略
-    // var cloneStrategies = {
-    //     isArray: function(copy, arr) {
-    //         arr.forEach(function(item) {
-    //             copy.push(deepClone(item));
-    //         })
-    //     },
-    //     isObject: function(copy, obj) {
-    //         for (var key in obj) {
-    //             copy[key] = deepClone(obj[key]);
-    //         }
-    //     }
-    // }
     // 深拷贝
     var deepClone = tools.deepClone = function(obj) {
-        // var type = "is" + toUp(getType(obj));
         var copy, arr, name;
-
-        // if (isReference(obj)) {
-            // copy = returnType(obj);
+        
         if ( (arr = isArray(obj)) || isObject(obj) ) {
             copy = arr ? [] : {};
-            // cloneStrategies[type](copy, obj);
             for (name in obj) {
                 copy[name] = deepClone(obj[name]);
             }
