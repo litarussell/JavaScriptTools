@@ -43,10 +43,10 @@
         return new tools.fn.init();
     }
 
-    var fn = tools.fn = tools.prototype = {}
+    var fn = tools.fn = tools.prototype = {};
 
     // 使用tools()返回的实例, 其原型与tools的原型一样
-    var init = tools.fn.init = function() {}
+    var init = tools.fn.init = function() {};
     init.prototype = tools.fn;
 
     var isArray = tools.isArray = isType('Array'),
@@ -168,53 +168,97 @@
     }
     fn.extend = function() {
         var arg = [].slice.call(arguments)
-        extend(this, arg)
+        extend(this, ...arg)
         return this
     }
 
     // 发布订阅模块
     var Event = function() {
-        var _cache = {},
-            on, off, trigger
+        this._events = {};
+    }
+    Event.prototype = {
+        on : function(e, fn) {
+            if (!this._events[e])
+                this._events[e] = []
+            this._events[e].push(fn);
+            return this;
+        },
 
-        on = function(e, fn) {
-            if (!_cache[e])
-                _cache[e] = []
-            _cache[e].push(fn)
-        }
-
-        off = function(e, fn) {
-            var event = _cache[e]
+        off : function(e, fn) {
+            var event = this._events[e];
             if (!event)
-                return false
+                return false;
 
             if (!fn)
-                event && (event.length = 0)
+                event && (delete this._events[e]) 
             else
                 for (var i = event.length - 1; i >= 0; i--) {
                     if (event[i] === fn)
                         event.splice(i, 1)
                 }
-        }
+            return this;
+        },
 
-        trigger = function() {
-            var e = [].shift.call(arguments),
-                fns = _cache[e]
+        trigger : function() {
+            var args = [].slice.call(arguments),
+                e = args.shift(),
+                fns = this._events[e]
 
             if (!fns || fns.length === 0)
                 return false
 
             fns.forEach(function(fn){
-                fn.apply(this, arguments)
+                fn.apply(this, args)
             })
-        }
-
-        return {
-            on: on,
-            off: off,
-            trigger: trigger
+            return this;
         }
     }
+
+    tools.extend(new Event)
+
+    // 事件模块的命名空间
+    tools.extend({
+        create : function(name){
+            var cache = this._cache ? this._cache : (this._cache = {}),
+                space;
+
+            if (!(typeof name === "string")) {
+                return new Error('命名空间名必须是字符串');
+            }
+
+            if ( (space = cache[name]) && (space instanceof Event) ) {
+                return space;
+            } else {
+                space = this._cache[name] = new Event;
+                return space;
+            }
+        },
+        use: function(name){
+            if (!(typeof name === "string")) {
+                return new Error('命名空间名必须是字符串');
+            }
+            if (this._cache) {
+                return this._cache.hasOwnProperty(name) ? this._cache[name] : false;
+            }
+            return false;
+        },
+        drop: function(){
+            var re = {},
+                arr = [].slice.call(arguments),
+                len = arr.length,
+                args = tools.unique(arr),
+                that = this;
+            args.forEach(function(name){
+                if (!(typeof name === "string")) {
+                    re[name] = false;
+                }else if (that._cache && that._cache.hasOwnProperty(name)) {
+                    that._cache[name] ? 
+                    (delete that._cache[name] ? re[name] = true : re[name] = false) : re[name] = false;
+                }
+            })
+            return re;
+        }
+    })
 
     var previous_ = root._,
         previous_tools = root.tools;

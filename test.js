@@ -1,6 +1,21 @@
 var i, o;
 // var j = tools.noConflict()
 
+// 测试发布订阅模块
+// var a = _.create('a')
+// a.on('a',(arg1, arg2)=>{console.log(arg1,arg2)})
+// _.on('a',(arg1, arg2)=>{console.log(arg1,arg2)})
+// console.log(_._events)
+// console.log(_._cache)
+// _.trigger('a',0,1).off('a')
+// a.trigger('a',1,2).off('a')
+// console.log(_._events)
+// console.log(_._cache)
+// _.create('b')
+// console.log(_._cache)
+// _.drop('a','b')
+// console.log(_._cache)
+
 
 // extend
 // console.log("对象扩展")
