@@ -52,12 +52,17 @@
     var isArray = tools.isArray = isType('Array'),
         isObject = tools.isObject = isType('Object'),
         isUndefined = tools.isUndefined = isType('Undefined'),
-        isString = isType('String'),
+        isNaN = tools.isNaN = function(num) {
+            if (Number.isNaN) {
+                return Number.isNaN(num);
+            }
+            return num !== num;
+        },
         isBoolean = isType('Boolean');
 
     // 首字母大写,其他字母小写
     var toUp = tools.toUp = function(str) {
-        if (isString(str)) {
+        if (typeof str === 'string') {
             var s = str.toLowerCase();
 
             return s[0].toUpperCase() + s.slice(1);
@@ -172,6 +177,14 @@
         return this
     }
 
+    // 单例模式
+    var getSingle = tools.getSingle = function(fn) {
+        var re;
+        return function() {
+            return re || (re = fn.call(this, arguments));
+        }
+    }
+
     // 发布订阅模块
     var Event = function() {
         this._events = {};
@@ -259,6 +272,102 @@
             return re;
         }
     })
+
+    // 表单校验
+    var fromStrategies = {
+        isNonEmpty: function(val, err) {
+            if (val === '') return err;
+        },
+        minLength: function(val, len, err) {
+            if (val.length < len) return err;
+        },
+        isMobile: function(val, err) {
+            if (! /(^1[3|5|8][0-9]{9$})/.test(val)) return err;
+        }
+    }
+    var Validator = tools.form = function() { this.cache = []; }
+    Validator.prototype.add = function(dom, rules) {
+        var self = this;
+        for (var i = 0, rule; rule = rules[i++];) {
+            (function(rule){
+                var ary = rule.strategy.split(':');
+                var err = rule.err;
+                self.cache.push(function(){
+                    var strategy = ary.shift();
+                    ary.unshift(dom.value);
+                    ary.push(err);
+                    return fromStrategies[strategy].apply(dom, ary);
+                })
+            })(rule)
+        }
+    }
+    Validator.prototype.start = function() {
+        var msg;
+        for (var i = 0, fn; fn = this.cache[i++];) {
+            if (msg = fn()) {
+                return msg;
+            }
+        }
+    }
+
+    // 动画
+    // 参数: 动画已消耗时间、原始位置、目标位置、持续总时间
+    var tween = {
+        linear: function(t, b , c, d) {
+            return c * t / d + b;
+        },
+        easeIn: function(t, b , c, d) {
+            return c * (t /= d) * t + b;
+        },
+        strongEaseIn: function(t, b , c, d) {
+            return c * (t /= d) * t * t * t * t + b;
+        },
+        strongEaseOut: function(t, b , c, d) {
+            return c * ( (t /= d - 1) * t * t * t * t + 1 ) + b;
+        },
+        sineaseIn: function(t, b , c, d) {
+            return c * (t /= d) * t * t + b;
+        },
+        sineaseOut: function(t, b , c, d) {
+            return c * ( (t /= d - 1) * t * t + 1 ) + b;
+        },
+    }
+    var Animate = function(dom) {
+        this.dom = dom;
+        this.startTime = 0;
+        this.startPos = 0;          //初始位置
+        this.endPos = 0;
+        this.propertyName = null;   //需要被改变的css属性名
+        this.easing = null;         //缓动算法
+        this.duration = null;       //持续时间
+    }
+    Animate.prototype.start = function(propertyName, endPos, duration, easing) {
+        this.startTime = +new Date;
+        this.startPos = this.dom.getBoundingClientReact()[propertyName];
+        this.propertyName = propertyName;
+        this.endPos = endPos;
+        this.duration = duration
+        this.easing = tween[easing];
+
+        var self = this;
+        var timeId = setInterval(function(){
+            if (self.step() === false) { //若动画结束则清楚计时器
+                clearInterval(timeId);
+            }
+        }, 19);
+    }
+    Animate.prototype.step = function() {
+        var t = + new Date;
+        if (t >= this.startTime + this.duration) {
+            this.update(this.endPos);
+            return false;
+        }
+        var pos = this.easing(t - this.startTime, this.startPos, this.endPos - this.startPos, this.duration);
+        this.update(pos);
+    }
+    Animate.prototype.update = function(pos) {
+        this.dom.style[this.propertyName] = pos + 'px';
+    }
 
     var previous_ = root._,
         previous_tools = root.tools;

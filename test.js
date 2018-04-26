@@ -1,6 +1,7 @@
 var i, o;
 // var j = tools.noConflict()
 
+
 // 测试发布订阅模块
 // var a = _.create('a')
 // a.on('a',(arg1, arg2)=>{console.log(arg1,arg2)})
